@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to deploy to after CI passes
+        type: environment
+        required: true
+        default: production
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        node-version: ["18", "20", "22"]
+    uses: ./.github/workflows/reusable-ci.yml
+    with:
+      node-version: ${{ matrix.node-version }}
+    secrets:
+      greeting-secret: ${{ secrets.GREETING_SECRET }}
+
+  deploy:
+    needs: test
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'production' }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-node-app
+        with:
+          node-version: "22"
+      - name: "Deploy (simulated)"
+        env:
+          GREETING_SECRET: ${{ secrets.GREETING_SECRET }}
+        run: |
+          echo "Deploying to ${{ inputs.environment || 'production' }}..."
+          node src/index.js "deployment"
+          echo "Deployed by ${{ github.actor }} from ${{ github.sha }}"

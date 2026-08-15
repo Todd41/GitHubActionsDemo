@@ -1,0 +1,15 @@
+name: Setup Node app
+description: Sets up Node.js with npm caching and installs dependencies
+inputs:
+  node-version:
+    description: Node.js version to install
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+    - run: npm ci
+      shell: bash
