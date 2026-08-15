@@ -1,0 +1,16 @@
+{
+  "name": "github-actions-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal Node.js app used to exercise GitHub Actions features",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test",
+    "lint": "node --check src/greet.js && node --check src/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
