@@ -41,8 +41,11 @@ environments together rather than being flattened into one file:
 
 3. **`.github/workflows/ci.yml`** — the caller/orchestrator, triggered on `push` to `main`,
    `pull_request`, and `workflow_dispatch`:
-   - `test` job: matrix over Node `18`/`20`/`22`, each matrix leg calling `reusable-ci.yml` and forwarding
-     `secrets.GREETING_SECRET` through as `greeting-secret`.
+   - `test` job: matrix over Node versions (currently just `24`), each matrix leg calling `reusable-ci.yml`
+     and forwarding `secrets.GREETING_SECRET` through as `greeting-secret`. The matrix entries must stay in
+     sync with the required status checks on the `main` branch ruleset (`test (<version>) / build-and-test`)
+     — adding/removing a version here without updating the ruleset will leave a stale required check that
+     can never pass, or a real check that isn't required.
    - `deploy` job: depends on `test`; gated with `environment: production` (or the `workflow_dispatch`
      `environment` input). Its `if` restricts it to `push` on `main` or manual dispatch — on a
      `pull_request` run it reports as **skipped**, not failed. This is the intended way to see
