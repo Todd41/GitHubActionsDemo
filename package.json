@@ -11,6 +11,6 @@
     "lint": "node --check src/greet.js && node --check src/index.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=24"
   }
 }
