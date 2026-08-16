@@ -38,6 +38,8 @@ environments together rather than being flattened into one file:
 2. **`.github/workflows/reusable-ci.yml`** — reusable workflow (`workflow_call`). Takes a `node-version`
    input and an optional `greeting-secret` secret; runs lint, test, and the CLI. This is the actual
    install/lint/test logic — it has no `on.push`/`on.pull_request` of its own and only runs when called.
+   It also writes a `dist/release.json` build-provenance file (commit, Node version, build time —
+   deliberately no secrets) and uploads it as artifact `dist-node-<node-version>`.
 
 3. **`.github/workflows/ci.yml`** — the caller/orchestrator, triggered on `push` to `main`,
    `pull_request`, and `workflow_dispatch`:
@@ -50,7 +52,9 @@ environments together rather than being flattened into one file:
      `environment` input). Its `if` restricts it to `push` on `main` or manual dispatch — on a
      `pull_request` run it reports as **skipped**, not failed. This is the intended way to see
      environment-scoped secrets and (if required reviewers are configured on the `production`
-     environment) manual-approval gating.
+     environment) manual-approval gating. It downloads the `dist-node-24` artifact the `test` job
+     produced and deploys that, rather than rebuilding — the artifact name is hardcoded to match the
+     matrix's single `24` entry, so it has to be updated in lockstep if the matrix changes.
 
 4. **`.github/workflows/github-actions-demo.yml`** — the original GitHub-generated starter workflow
    (`on: [push]`, a handful of `echo` steps). Left untouched as the baseline/reference; not part of the
