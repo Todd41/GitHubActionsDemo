@@ -33,10 +33,17 @@ jobs:
       - uses: ./.github/actions/setup-node-app
         with:
           node-version: "24"
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-node-24
+          path: dist/
       - name: "Deploy (simulated)"
         env:
           GREETING_SECRET: ${{ secrets.GREETING_SECRET }}
         run: |
           echo "Deploying to ${{ inputs.environment || 'production' }}..."
+          echo "Deploying build:"
+          cat dist/release.json
           node src/index.js "deployment"
           echo "Deployed by ${{ github.actor }} from ${{ github.sha }}"

@@ -26,3 +26,18 @@ jobs:
         env:
           GREETING_SECRET: ${{ secrets.greeting-secret }}
         run: node src/index.js "Node ${{ inputs.node-version }}"
+      - name: Create build artifact
+        run: |
+          mkdir -p dist
+          cat > dist/release.json <<JSON
+          {
+            "commit": "${{ github.sha }}",
+            "nodeVersion": "${{ inputs.node-version }}",
+            "builtAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          JSON
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-node-${{ inputs.node-version }}
+          path: dist/
