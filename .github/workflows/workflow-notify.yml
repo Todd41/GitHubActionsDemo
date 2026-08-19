@@ -1,0 +1,57 @@
+name: Workflow notification
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - CI
+      - Scheduled smoke test
+    types: [completed]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check webhook configuration
+        id: webhook
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.NOTIFY_WEBHOOK_URL }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Send workflow status webhook
+        if: steps.webhook.outputs.enabled == 'true'
+        env:
+          WEBHOOK_URL: ${{ secrets.NOTIFY_WEBHOOK_URL }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name || github.workflow }}
+          WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion || 'manual-dispatch' }}
+          WORKFLOW_URL: ${{ github.event.workflow_run.html_url || format('{0}/{1}/actions/runs/{2}', github.server_url, github.repository, github.run_id) }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          payload = {
+              "event": "github_actions",
+              "workflow": os.environ["WORKFLOW_NAME"],
+              "status": os.environ["WORKFLOW_CONCLUSION"],
+              "url": os.environ["WORKFLOW_URL"],
+              "sha": os.environ["SHA"],
+          }
+
+          req = urllib.request.Request(
+              os.environ["WEBHOOK_URL"],
+              data=json.dumps(payload).encode("utf-8"),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+
+          with urllib.request.urlopen(req, timeout=30) as response:
+              print(f"Webhook response: {response.status}")
+          PY

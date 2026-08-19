@@ -1,0 +1,14 @@
+name: Scheduled smoke test
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    uses: ./.github/workflows/reusable-ci.yml
+    with:
+      node-version: "24"
+    secrets:
+      greeting-secret: ${{ secrets.GREETING_SECRET }}
